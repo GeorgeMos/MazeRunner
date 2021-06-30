@@ -19,7 +19,7 @@ var nodeMap [][]node
 var mazeFile string = "maze1000.png"
 
 //-------
-
+//Opens the maze image
 func initPxMap() [][]bool {
 	maze, err := os.Open(mazeFile)
 	if err != nil {
@@ -56,6 +56,7 @@ func initPxMap() [][]bool {
 	return pxMap
 }
 
+//Draws the path and saves to the output image
 func saveImage(nodeMap [][]node) {
 	solved := image.NewRGBA(image.Rect(0, 0, sizeX, sizeY))
 	for x := 0; x < sizeX; x++ {
@@ -127,6 +128,7 @@ type node struct {
 	pos           [2]int
 }
 
+//Initialises the node map
 func initNodeMap(pxMap [][]bool) {
 	for x := 0; x < sizeX; x++ {
 		var temp []node
@@ -137,6 +139,7 @@ func initNodeMap(pxMap [][]bool) {
 	}
 }
 
+//Initialises the nodes
 func initNodes(pxMap [][]bool) {
 	for x := 0; x < sizeX; x++ {
 		for y := 0; y < sizeX; y++ {
@@ -183,6 +186,7 @@ func initNodes(pxMap [][]bool) {
 	}
 }
 
+//Links all the nodes and creates a tree structure
 func initAdjMap(pxMap [][]bool) {
 	for x := 0; x < sizeX; x++ {
 		for y := 0; y < sizeY; y++ {
