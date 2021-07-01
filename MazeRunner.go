@@ -16,7 +16,7 @@ var sizeY int
 var path []*node
 var suroundMap = [4][2]int{{-1, 0}, {1, 0}, {0, 1}, {0, -1}}
 var nodeMap [][]node
-var mazeFile string = "maze1000.png"
+var mazeFile string = "braid.png"
 var nodes int = 0
 
 //-------
@@ -58,7 +58,7 @@ func initPxMap() [][]bool {
 }
 
 //Draws the path and saves to the output image
-func saveImage(nodeMap [][]node) {
+func saveImage(nodeMap [][]node, file string) {
 	solved := image.NewRGBA(image.Rect(0, 0, sizeX, sizeY))
 	for x := 0; x < sizeX; x++ {
 		for y := 0; y < sizeY; y++ {
@@ -78,7 +78,7 @@ func saveImage(nodeMap [][]node) {
 		y := path[i].pos[1]
 
 		if path[i+1].pos[0] > path[i].pos[0] {
-			for x < path[i+1].pos[0] {
+			for x <= path[i+1].pos[0] {
 				solved.Set(x, y, color.RGBA{0, 255, 0, 255})
 				x++
 			}
@@ -88,7 +88,7 @@ func saveImage(nodeMap [][]node) {
 		y = path[i].pos[1]
 
 		if path[i+1].pos[0] < path[i].pos[0] {
-			for x > path[i+1].pos[0] {
+			for x >= path[i+1].pos[0] {
 				solved.Set(x, y, color.RGBA{0, 255, 0, 255})
 				x--
 			}
@@ -98,7 +98,7 @@ func saveImage(nodeMap [][]node) {
 		y = path[i].pos[1]
 
 		if path[i+1].pos[1] > path[i].pos[1] {
-			for y < path[i+1].pos[1] {
+			for y <= path[i+1].pos[1] {
 				solved.Set(x, y, color.RGBA{0, 255, 0, 255})
 				y++
 			}
@@ -108,7 +108,7 @@ func saveImage(nodeMap [][]node) {
 		y = path[i].pos[1]
 
 		if path[i+1].pos[1] < path[i].pos[1] {
-			for y > path[i+1].pos[1] {
+			for y >= path[i+1].pos[1] {
 				solved.Set(x, y, color.RGBA{0, 255, 0, 255})
 				y--
 			}
@@ -116,7 +116,7 @@ func saveImage(nodeMap [][]node) {
 
 	}
 
-	out, err := os.Create("solvedMaze.png")
+	out, err := os.Create(file)
 	if err == nil {
 		png.Encode(out, solved)
 		out.Close()
@@ -129,6 +129,8 @@ type node struct {
 	openSideNum   int
 	visited       bool
 	pos           [2]int
+	//Used in bfs
+	parrent *node
 }
 
 //Initialises the node map
@@ -337,35 +339,32 @@ func getStart() *node {
 }
 
 //BFS (Recursive)
-func delPath(target *node) {
-	var temp []*node
-	for i := 0; i < len(path); i++ {
-		if !(path[i].pos[0] == target.pos[0] && path[i].pos[1] == target.pos[1]) {
-			temp = append(temp, path[i])
+var bfsQueue []*node
+
+func bfs(currNode *node) *node { //Traverses the tree linking each node to its parren stoping when it hits the end
+	currNode.visited = true
+	if len(bfsQueue) == 0 {
+		bfsQueue = append(bfsQueue, currNode)
+	}
+	for i := 0; i < len(currNode.adjacentNodes); i++ {
+		if !currNode.adjacentNodes[i].visited {
+			bfsQueue = append(bfsQueue, currNode.adjacentNodes[i])
+			currNode.adjacentNodes[i].parrent = currNode
 		}
 	}
-	path = temp
-}
-func bfs(currNode *node) {
-	fmt.Println(currNode.pos)
-	if !currNode.visited {
-		currNode.visited = true
-		path = append(path, currNode)
-	}
-	hasPath := false
+	nextNode := bfsQueue[1]
+	bfsQueue = bfsQueue[1:]
 	if currNode.nodeType != "end" {
-		for i := 0; i < len(currNode.adjacentNodes); i++ {
-			if !currNode.adjacentNodes[i].visited {
-				hasPath = true
-				nextNode := currNode.adjacentNodes[i]
-				bfs(nextNode)
-			}
-		}
+		return bfs(nextNode)
+	} else {
+		return currNode
+	}
+}
 
-		if !hasPath {
-			delPath(currNode)
-		}
-
+func bfsLinker(currNode *node) { //Starting from the end it backtracks to each parrent creating a unique path
+	path = append(path, currNode)
+	if currNode.parrent != nil {
+		bfsLinker(currNode.parrent)
 	}
 }
 
@@ -414,7 +413,7 @@ func main() {
 	elapsed := time.Since(sTime)
 
 	fmt.Println("Finished Recursive D.F.S in: " + elapsed.String())
-	saveImage(nodeMap)
+	saveImage(nodeMap, "recDfs.png")
 	rstVisited()
 
 	//NonRecDFS
@@ -422,7 +421,19 @@ func main() {
 	dfs(pxMap)
 	elapsed = time.Since(sTime)
 	fmt.Println("Finished Non-Recursive D.F.S in: " + elapsed.String())
-	saveImage(nodeMap)
+	saveImage(nodeMap, "NonRecDfs.png")
+	rstVisited()
+
+	//RecBFS
+	sTime = time.Now()
+	endNode := bfs(getStart())
+	bfsLinker(endNode)
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+	elapsed = time.Since(sTime)
+	fmt.Println("Finished Recurvive B.F.S in: " + elapsed.String())
+	saveImage(nodeMap, "recBfs.png")
 	rstVisited()
 
 }
