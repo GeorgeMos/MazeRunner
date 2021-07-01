@@ -7,6 +7,8 @@ import (
 	"image/png"
 	"log"
 	"os"
+	"runtime"
+	"sync"
 	"time"
 )
 
@@ -267,6 +269,7 @@ func rstVisited() {
 	for x := 0; x < sizeX; x++ {
 		for y := 0; y < sizeY; y++ {
 			nodeMap[x][y].visited = false
+			nodeMap[x][y].parrent = nil
 		}
 	}
 	for {
@@ -370,6 +373,42 @@ func bfsLinker(currNode *node) { //Starting from the end it backtracks to each p
 
 //--------------
 
+func getEnd() *node {
+	var endNode *node = nil
+	for x := 0; x < sizeX; x++ {
+		for y := 0; y < sizeY; y++ {
+			if nodeMap[x][y].nodeType == "end" {
+				endNode = &nodeMap[x][y]
+				break
+			}
+		}
+	}
+	return endNode
+}
+
+//Multi-Routine BFS
+var routines int = 0
+var wg sync.WaitGroup
+
+func mrBfs(currNode *node) { //For every node a new go-routine starts linking each node with its parent
+	currNode.visited = true
+	defer wg.Done()
+	if currNode.nodeType != "end" {
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				nextNode := currNode.adjacentNodes[i]
+				nextNode.parrent = currNode
+				routines++
+				wg.Add(1)
+				go mrBfs(nextNode)
+			}
+		}
+	}
+
+}
+
+//-----------------
+
 //DFS (Recursive)
 func recDfs(currNode *node) {
 	if !currNode.visited {
@@ -434,6 +473,23 @@ func main() {
 	elapsed = time.Since(sTime)
 	fmt.Println("Finished Recurvive B.F.S in: " + elapsed.String())
 	saveImage(nodeMap, "recBfs.png")
+	rstVisited()
+
+	//mrBFS
+	processors := runtime.GOMAXPROCS(runtime.NumCPU())
+	sTime = time.Now()
+	wg.Add(1)
+	mrBfs(getStart())
+	wg.Wait()
+
+	endNode = getEnd()
+	bfsLinker(endNode)
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+	elapsed = time.Since(sTime)
+	fmt.Println("Finished Multi-Routine B.F.S in: "+elapsed.String()+", Routines:", routines, "Processors:", processors)
+	saveImage(nodeMap, "mrBfs.png")
 	rstVisited()
 
 }
