@@ -17,6 +17,7 @@ var path []*node
 var suroundMap = [4][2]int{{-1, 0}, {1, 0}, {0, 1}, {0, -1}}
 var nodeMap [][]node
 var mazeFile string = "maze1000.png"
+var nodes int = 0
 
 //-------
 //Opens the maze image
@@ -71,6 +72,7 @@ func saveImage(nodeMap [][]node) {
 	}
 	for i := 0; i < len(path)-1; i++ {
 		solved.Set(path[i].pos[0], path[i].pos[1], color.RGBA{0, 255, 0, 255})
+
 		//x++
 		x := path[i].pos[0]
 		y := path[i].pos[1]
@@ -111,6 +113,7 @@ func saveImage(nodeMap [][]node) {
 				y--
 			}
 		}
+
 	}
 
 	out, err := os.Create("solvedMaze.png")
@@ -160,6 +163,7 @@ func initNodes(pxMap [][]bool) {
 
 				if nodeMap[x][y].openSideNum >= 3 {
 					nodeMap[x][y].nodeType = "junction"
+					nodes++
 				}
 				if nodeMap[x][y].openSideNum == 1 {
 					nodeMap[x][y].nodeType = "dEnd"
@@ -169,14 +173,17 @@ func initNodes(pxMap [][]bool) {
 						nodeMap[x][y].nodeType = "path"
 					} else {
 						nodeMap[x][y].nodeType = "corner"
+						nodes++
 					}
 				}
 
 				if y == 0 {
 					nodeMap[x][y].nodeType = "start"
+					nodes++
 				}
 				if y == sizeY-1 {
 					nodeMap[x][y].nodeType = "end"
+					nodes++
 				}
 
 			} else {
@@ -254,7 +261,22 @@ func initAdjMap(pxMap [][]bool) {
 	}
 }
 
-//DFS Function
+func rstVisited() {
+	for x := 0; x < sizeX; x++ {
+		for y := 0; y < sizeY; y++ {
+			nodeMap[x][y].visited = false
+		}
+	}
+	for {
+		if len(path) > 0 {
+			path = path[:len(path)-1]
+		} else {
+			break
+		}
+	}
+}
+
+//DFS (Non Recursive)
 func dfs(pxMap [][]bool) {
 	var currNode *node
 	var nextNode *node
@@ -301,18 +323,106 @@ func dfs(pxMap [][]bool) {
 }
 
 //-------------
+func getStart() *node {
+	var startNode *node = nil
+	for x := 0; x < sizeX; x++ {
+		for y := 0; y < sizeY; y++ {
+			if nodeMap[x][y].nodeType == "start" {
+				startNode = &nodeMap[x][y]
+				break
+			}
+		}
+	}
+	return startNode
+}
+
+//BFS (Recursive)
+func delPath(target *node) {
+	var temp []*node
+	for i := 0; i < len(path); i++ {
+		if !(path[i].pos[0] == target.pos[0] && path[i].pos[1] == target.pos[1]) {
+			temp = append(temp, path[i])
+		}
+	}
+	path = temp
+}
+func bfs(currNode *node) {
+	fmt.Println(currNode.pos)
+	if !currNode.visited {
+		currNode.visited = true
+		path = append(path, currNode)
+	}
+	hasPath := false
+	if currNode.nodeType != "end" {
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				hasPath = true
+				nextNode := currNode.adjacentNodes[i]
+				bfs(nextNode)
+			}
+		}
+
+		if !hasPath {
+			delPath(currNode)
+		}
+
+	}
+}
+
+//--------------
+
+//DFS (Recursive)
+func recDfs(currNode *node) {
+	if !currNode.visited {
+		path = append(path, currNode)
+		currNode.visited = true
+	}
+	hasPath := false
+	var nextNode *node
+	if currNode.nodeType != "end" {
+		//The next node is the next available adjacent node
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				hasPath = true
+				nextNode = currNode.adjacentNodes[i]
+				break
+			}
+		}
+		if hasPath { //If there is an available path go there
+			recDfs(nextNode)
+		} else { //Else go bact to the previous node and remove the current from the path
+			if len(path) > 0 {
+				nextNode = path[len(path)-1]
+				path = path[:len(path)-1]
+				recDfs(nextNode)
+			}
+		}
+	} else { //If currNode = the end add it to the path
+		path = append(path, currNode)
+	}
+}
 
 func main() {
 	var pxMap = initPxMap()
 	initNodeMap(pxMap)
 	initNodes(pxMap)
 	initAdjMap(pxMap)
-	//DFS
+	fmt.Println("Nodes:", nodes)
+	//RecDFS
 	sTime := time.Now()
-	dfs(pxMap)
+	recDfs(getStart())
 	elapsed := time.Since(sTime)
 
+	fmt.Println("Finished Recursive D.F.S in: " + elapsed.String())
 	saveImage(nodeMap)
-	fmt.Println("Finished D.F.S in: " + elapsed.String())
+	rstVisited()
+
+	//NonRecDFS
+	sTime = time.Now()
+	dfs(pxMap)
+	elapsed = time.Since(sTime)
+	fmt.Println("Finished Non-Recursive D.F.S in: " + elapsed.String())
+	saveImage(nodeMap)
+	rstVisited()
 
 }
