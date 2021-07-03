@@ -36,3 +36,7 @@ Instead of making an adjacency matrix which does not scale very well, `adjacentN
 `initNodes(pxMap [][]bool)` assigns the `nodeType` in each node and `initAdjMap(pxMap [][]bool)` links all the nodes and creates a tree data structure. Now everything is ready for us to start solving!
 
 ## The algorithms
+This is a WIP project and more algorithms will be added in the future so keep checking this section out for updates!
+### Depth First Search
+
+### Breadth First Search
