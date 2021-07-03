@@ -37,6 +37,56 @@ Instead of making an adjacency matrix which does not scale very well, `adjacentN
 
 ## The algorithms
 This is a WIP project and more algorithms will be added in the future so keep checking this section out for updates!
-### Depth First Search
+### Depth First Search(DFS)
+#### Non-Recursive:
+```go
+func dfs(pxMap [][]bool) {
+	var currNode *node
+	var nextNode *node
+	//find start
+	for x := 0; x < sizeX; x++ {
+		for y := 0; y < sizeY; y++ {
+			if nodeMap[x][y].nodeType == "start" {
+				currNode = &nodeMap[x][y]
+				break
+			}
+		}
+	}
+	path = append(path, currNode)
+	for {
+		currNode.visited = true
+		if currNode.nodeType == "end" {
+			path = append(path, currNode)
+			break
+		}
+		validPath := false
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				nextNode = currNode.adjacentNodes[i]
+				validPath = true
+				break
+			}
+		}
+		if !validPath {
+			//If all next nodes are visited go back 1 node and remove the last one from the path
+			if len(path) > 0 {
+				nextNode = path[len(path)-1]
+				path = path[:len(path)-1]
+			} else {
+				break
+			}
+			currNode = nextNode
+		} else {
+			currNode = nextNode
+			path = append(path, currNode)
+		}
 
-### Breadth First Search
+	}
+
+}
+```
+
+
+
+
+### Breadth First Search(BFS)
