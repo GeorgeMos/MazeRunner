@@ -31,4 +31,5 @@ The two main variables that we use are `nodeType` and `adjacentNodes`. The rest 
 - "dEnd"
 - "corner"
 - "junction"
+
 Instead of making an adjacency matrix which does not scale very well, `adjacentNodes` like a linked list, stores pointers to all the nodes that are next to the current node.
