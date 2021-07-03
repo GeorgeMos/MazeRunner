@@ -38,6 +38,7 @@ Instead of making an adjacency matrix which does not scale very well, `adjacentN
 ## The algorithms
 This is a WIP project and more algorithms will be added in the future so keep checking this section out for updates!
 ### Depth First Search(DFS)
+DFS is pretty simple. Starting from the root of the tree (In this case the start of the maze) DFS travels as deep in to the tree as it can. If it comes to a dead end ot backtracks to a node with an available path. To achive this DFS uses a Stack(LIFO). If the current node is marked as the "end" then the loop stops. I implemented DFS with a while loop (Non-Recursive) and with Recursion in order to compare.
 #### Non-Recursive:
 ```go
 func dfs(pxMap [][]bool) {
