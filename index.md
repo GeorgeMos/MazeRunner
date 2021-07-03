@@ -7,11 +7,11 @@ At first the maze is loaded in to memmory as an array of RGBA colors. Then in li
 false = wall and true = path.<br>
 The input png image must follow a set of rules.
 
-1. The maze must be black and white (Black for wall and white for path)
-2. Wall and path are 1 pixel
-3. Start is at the top and exit at the bottom
+- The maze must be black and white (Black for wall and white for path)
+- Wall and path are 1 pixel
+- Start is at the top and exit at the bottom
 
-With the help of the following struct, again in linear time an array of nodes is created.
+With the help of the following struct, again in linear time an array of nodes is created for each pixel of the maze.
 ```go
 type node struct {
 	nodeType      string
@@ -23,4 +23,12 @@ type node struct {
 	parrent *node
 }
 ```
-The two main variables that we use are `nodeType` and `adjacentNodes`.
+The two main variables that we use are `nodeType` and `adjacentNodes`. The rest will be explained later. <br>
+### Linking the nodes
+`nodeType` can have the following values
+- "wall"
+- "path"
+- "dEnd"
+- "corner"
+- "junction"
+Instead of making an adjacency matrix which does not scale very well, `adjacentNodes` like a linked list, stores pointers to all the nodes that are next to the current node.
