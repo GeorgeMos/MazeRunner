@@ -18,7 +18,7 @@ var sizeY int
 var path []*node
 var suroundMap = [4][2]int{{-1, 0}, {1, 0}, {0, 1}, {0, -1}}
 var nodeMap [][]node
-var mazeFile string = "braid.png"
+var mazeFile string = "maze1000.png"
 var nodes int = 0
 
 //-------
@@ -388,7 +388,6 @@ func getEnd() *node {
 
 //Multi-Routine BFS
 var routines int = 0
-var wg sync.WaitGroup
 
 func mrBfs(currNode *node) { //For every node a new go-routine starts linking each node with its parent
 	currNode.visited = true
@@ -440,6 +439,9 @@ func recDfs(currNode *node) {
 	}
 }
 
+var processors = runtime.GOMAXPROCS(runtime.NumCPU())
+var wg sync.WaitGroup
+
 func main() {
 	var pxMap = initPxMap()
 	initNodeMap(pxMap)
@@ -476,12 +478,10 @@ func main() {
 	rstVisited()
 
 	//mrBFS
-	processors := runtime.GOMAXPROCS(runtime.NumCPU())
 	sTime = time.Now()
 	wg.Add(1)
 	mrBfs(getStart())
 	wg.Wait()
-
 	endNode = getEnd()
 	bfsLinker(endNode)
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
