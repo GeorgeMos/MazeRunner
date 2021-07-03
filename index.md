@@ -86,7 +86,7 @@ func dfs(pxMap [][]bool) {
 
 }
 ```
-### Recursive
+#### Recursive:
 ```go
 func recDfs(currNode *node) {
 	if !currNode.visited {
@@ -118,8 +118,3 @@ func recDfs(currNode *node) {
 	}
 }
 ```
-
-
-
-
-### Breadth First Search(BFS)
