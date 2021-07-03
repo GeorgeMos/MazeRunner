@@ -38,7 +38,7 @@ Instead of making an adjacency matrix which does not scale very well, `adjacentN
 ## The algorithms
 This is a WIP project and more algorithms will be added in the future so keep checking this section out for updates!
 ### Depth First Search(DFS)
-DFS is pretty simple. Starting from the root of the tree (In this case the start of the maze) DFS travels as deep in to the tree as it can. If it comes to a dead end ot backtracks to a node with an available path. To achive this DFS uses a Stack(LIFO). If the current node is marked as the "end" then the loop stops. I implemented DFS with a while loop (Non-Recursive) and with Recursion in order to compare.
+DFS is pretty simple. Starting from the root of the tree (In this case the start of the maze) DFS travels as deep in to the tree as it can. If it comes to a dead end it backtracks to a node with an available path. To achive this DFS uses a Stack(LIFO). If the current node is marked as the "end" then the loop stops. The array `path` is used as the stack and it stores pointers to the nodes we have to follow in order to solve the maze. I implemented DFS with a while loop (Non-Recursive) and with Recursion in order to compare.
 #### Non-Recursive:
 ```go
 func dfs(pxMap [][]bool) {
@@ -84,6 +84,38 @@ func dfs(pxMap [][]bool) {
 
 	}
 
+}
+```
+### Recursive
+```go
+func recDfs(currNode *node) {
+	if !currNode.visited {
+		path = append(path, currNode)
+		currNode.visited = true
+	}
+	hasPath := false
+	var nextNode *node
+	if currNode.nodeType != "end" {
+		//The next node is the next available adjacent node
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				hasPath = true
+				nextNode = currNode.adjacentNodes[i]
+				break
+			}
+		}
+		if hasPath { //If there is an available path go there
+			recDfs(nextNode)
+		} else { //Else go bact to the previous node and remove the current from the path
+			if len(path) > 0 {
+				nextNode = path[len(path)-1]
+				path = path[:len(path)-1]
+				recDfs(nextNode)
+			}
+		}
+	} else { //If currNode = the end add it to the path
+		path = append(path, currNode)
+	}
 }
 ```
 
