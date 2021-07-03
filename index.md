@@ -33,55 +33,6 @@ The two main variables that we use are `nodeType` and `adjacentNodes`. The rest 
 - "junction"
 
 Instead of making an adjacency matrix which does not scale very well, `adjacentNodes` like a linked list, stores pointers to all the nodes that are next to the current node.
-The following function assigns types to every node.
-```go
-func initNodes(pxMap [][]bool) {
-	for x := 0; x < sizeX; x++ {
-		for y := 0; y < sizeX; y++ {
-			nodeMap[x][y].pos[0] = x
-			nodeMap[x][y].pos[1] = y
-			nodeMap[x][y].visited = false
-			if pxMap[x][y] {
-				//Scaning for type
-				for i := 0; i < len(suroundMap); i++ {
-					testX := x + suroundMap[i][0]
-					testY := y + suroundMap[i][1]
-					if testX >= 0 && testX < sizeX && testY >= 0 && testY < sizeY {
-						if pxMap[testX][testY] {
-							nodeMap[x][y].openSideNum++
-						}
-					}
-				}
+`initNodes(pxMap [][]bool)` assigns the `nodeType` in each node and `initAdjMap(pxMap [][]bool)` links all the nodes and creates a tree data structure. Now everything is ready for us to start solving!
 
-				if nodeMap[x][y].openSideNum >= 3 {
-					nodeMap[x][y].nodeType = "junction"
-					nodes++
-				}
-				if nodeMap[x][y].openSideNum == 1 {
-					nodeMap[x][y].nodeType = "dEnd"
-				}
-				if nodeMap[x][y].openSideNum == 2 {
-					if pxMap[x-1][y] && pxMap[x+1][y] || pxMap[x][y-1] && pxMap[x][y+1] {
-						nodeMap[x][y].nodeType = "path"
-					} else {
-						nodeMap[x][y].nodeType = "corner"
-						nodes++
-					}
-				}
-
-				if y == 0 {
-					nodeMap[x][y].nodeType = "start"
-					nodes++
-				}
-				if y == sizeY-1 {
-					nodeMap[x][y].nodeType = "end"
-					nodes++
-				}
-
-			} else {
-				nodeMap[x][y].nodeType = "wall"
-			}
-		}
-	}
-}
-```
+## The algorithms
