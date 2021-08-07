@@ -18,7 +18,7 @@ var sizeY int
 var path []*node
 var suroundMap = [4][2]int{{-1, 0}, {1, 0}, {0, 1}, {0, -1}}
 var nodeMap [][]node
-var mazeFile string = "maze1000.png"
+var mazeFile string = "tiny.png"
 var nodes int = 0
 
 //-------
@@ -133,6 +133,7 @@ type node struct {
 	pos           [2]int
 	//Used in bfs
 	parrent *node
+	weights []int //The length to go from the parrent to this node
 }
 
 //Initialises the node map
@@ -201,7 +202,7 @@ func initNodes(pxMap [][]bool) {
 func initAdjMap(pxMap [][]bool) {
 	for x := 0; x < sizeX; x++ {
 		for y := 0; y < sizeY; y++ {
-			if pxMap[x][y] {
+			if pxMap[x][y] && nodeMap[x][y].nodeType != "dEnd" && nodeMap[x][y].nodeType != "path" {
 				//scanning x++
 				ix := x
 				iy := y
@@ -213,6 +214,7 @@ func initAdjMap(pxMap [][]bool) {
 					}
 
 					if nodeMap[ix][iy].nodeType != "dEnd" && nodeMap[ix][iy].nodeType != "wall" && nodeMap[ix][iy].nodeType != "path" {
+						nodeMap[x][y].weights = append(nodeMap[x][y].weights, ix-x)
 						nodeMap[x][y].adjacentNodes = append(nodeMap[x][y].adjacentNodes, &nodeMap[ix][iy])
 						break
 					}
@@ -227,6 +229,7 @@ func initAdjMap(pxMap [][]bool) {
 						break
 					}
 					if nodeMap[ix][iy].nodeType != "dEnd" && nodeMap[ix][iy].nodeType != "wall" && nodeMap[ix][iy].nodeType != "path" {
+						nodeMap[x][y].weights = append(nodeMap[x][y].weights, iy-y)
 						nodeMap[x][y].adjacentNodes = append(nodeMap[x][y].adjacentNodes, &nodeMap[ix][iy])
 						break
 					}
@@ -242,6 +245,7 @@ func initAdjMap(pxMap [][]bool) {
 					}
 
 					if nodeMap[ix][iy].nodeType != "dEnd" && nodeMap[ix][iy].nodeType != "wall" && nodeMap[ix][iy].nodeType != "path" {
+						nodeMap[x][y].weights = append(nodeMap[x][y].weights, x-ix)
 						nodeMap[x][y].adjacentNodes = append(nodeMap[x][y].adjacentNodes, &nodeMap[ix][iy])
 						break
 					}
@@ -256,6 +260,7 @@ func initAdjMap(pxMap [][]bool) {
 						break
 					}
 					if nodeMap[ix][iy].nodeType != "dEnd" && nodeMap[ix][iy].nodeType != "wall" && nodeMap[ix][iy].nodeType != "path" {
+						nodeMap[x][y].weights = append(nodeMap[x][y].weights, y-iy)
 						nodeMap[x][y].adjacentNodes = append(nodeMap[x][y].adjacentNodes, &nodeMap[ix][iy])
 						break
 					}
@@ -344,7 +349,7 @@ func getStart() *node {
 //BFS (Recursive)
 var bfsQueue []*node
 
-func bfs(currNode *node) *node { //Traverses the tree linking each node to its parren stoping when it hits the end
+func recbfs(currNode *node) *node { //Traverses the tree linking each node to its parren stoping when it hits the end
 	currNode.visited = true
 	if len(bfsQueue) == 0 {
 		bfsQueue = append(bfsQueue, currNode)
@@ -355,13 +360,42 @@ func bfs(currNode *node) *node { //Traverses the tree linking each node to its p
 			currNode.adjacentNodes[i].parrent = currNode
 		}
 	}
-	nextNode := bfsQueue[1]
-	bfsQueue = bfsQueue[1:]
+	var nextNode *node
+	if len(bfsQueue) > 1 {
+		nextNode = bfsQueue[1]
+		bfsQueue = bfsQueue[1:]
+	} else {
+		nextNode = nil
+	}
 	if currNode.nodeType != "end" {
-		return bfs(nextNode)
+		return recbfs(nextNode)
 	} else {
 		return currNode
 	}
+}
+
+func bfs(startNode *node) *node {
+	var bfsQueue []*node
+	bfsQueue = append(bfsQueue, startNode)
+	currNode := startNode
+	var endNode *node
+	for currNode.nodeType != "end" {
+		currNode.visited = true
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				bfsQueue = append(bfsQueue, currNode.adjacentNodes[i])
+				currNode.adjacentNodes[i].parrent = currNode
+			}
+		}
+		currNode = bfsQueue[1]
+		bfsQueue = bfsQueue[1:]
+
+		if currNode.nodeType == "end" {
+			endNode = currNode
+			break
+		}
+	}
+	return endNode
 }
 
 func bfsLinker(currNode *node) { //Starting from the end it backtracks to each parrent creating a unique path
@@ -453,7 +487,7 @@ func main() {
 	recDfs(getStart())
 	elapsed := time.Since(sTime)
 
-	fmt.Println("Finished Recursive D.F.S in: " + elapsed.String())
+	fmt.Println("Finished Recursive D.F.S in: "+elapsed.String()+", Path Length:", len(path), "Nodes")
 	saveImage(nodeMap, "recDfs.png")
 	rstVisited()
 
@@ -461,11 +495,29 @@ func main() {
 	sTime = time.Now()
 	dfs(pxMap)
 	elapsed = time.Since(sTime)
-	fmt.Println("Finished Non-Recursive D.F.S in: " + elapsed.String())
+	fmt.Println("Finished Non-Recursive D.F.S in: "+elapsed.String()+", Path Length:", len(path), "Nodes")
 	saveImage(nodeMap, "NonRecDfs.png")
 	rstVisited()
 
-	//RecBFS
+	/*//RecBFS
+	sTime = time.Now()
+
+	defer func() {
+		if err := recover(); err != nil {
+			log.Println(err)
+		}
+	}()
+	endNode := recbfs(getStart())
+	bfsLinker(endNode)
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+	elapsed = time.Since(sTime)
+	fmt.Println("Finished Recurvive B.F.S in: "+elapsed.String()+", Path Length:", len(path), "Nodes")
+	saveImage(nodeMap, "recBfs.png")
+	rstVisited()*/
+
+	/*//BFS
 	sTime = time.Now()
 	endNode := bfs(getStart())
 	bfsLinker(endNode)
@@ -473,23 +525,24 @@ func main() {
 		path[i], path[j] = path[j], path[i]
 	}
 	elapsed = time.Since(sTime)
-	fmt.Println("Finished Recurvive B.F.S in: " + elapsed.String())
-	saveImage(nodeMap, "recBfs.png")
-	rstVisited()
+	fmt.Println("Finished Non-Recursive B.F.S in: "+elapsed.String()+", Path Length:", len(path), "Nodes")
+	saveImage(nodeMap, "NonRecBfs.png")
+	rstVisited()*/
 
 	//mrBFS
 	sTime = time.Now()
 	wg.Add(1)
 	mrBfs(getStart())
 	wg.Wait()
-	endNode = getEnd()
+	endNode := getEnd()
 	bfsLinker(endNode)
 	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
 		path[i], path[j] = path[j], path[i]
 	}
 	elapsed = time.Since(sTime)
-	fmt.Println("Finished Multi-Routine B.F.S in: "+elapsed.String()+", Routines:", routines, "Processors:", processors)
+	fmt.Println("Finished Multi-Routine B.F.S in: "+elapsed.String()+", Path Length:", len(path), "Nodes"+", Routines:", routines, "Processors:", processors)
 	saveImage(nodeMap, "mrBfs.png")
 	rstVisited()
 
+	fmt.Println(getStart().adjacentNodes[0].weights)
 }
