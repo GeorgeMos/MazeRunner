@@ -18,7 +18,7 @@ var sizeY int
 var path []*node
 var suroundMap = [4][2]int{{-1, 0}, {1, 0}, {0, 1}, {0, -1}}
 var nodeMap [][]node
-var mazeFile string = "tiny.png"
+var mazeFile string = "braid500.png"
 var nodes int = 0
 
 //-------
@@ -473,6 +473,54 @@ func recDfs(currNode *node) {
 	}
 }
 
+//----Weighted Tree Algorithms-----//
+//Weighted bfs (Non-Recursive only due to previous observation on execution speed)
+func wBfs(startNode *node) *node {
+	var bfsQueue []*node
+	bfsQueue = append(bfsQueue, startNode)
+	currNode := startNode
+	var endNode *node
+	for currNode.nodeType != "end" {
+		currNode.visited = true
+		//Sorting the weight array of the current node se the cheapest nodes are scanned first
+		start := 0
+		for i := 0; i < len(currNode.weights); i++ {
+			min := currNode.weights[start]
+			minPos := start
+			for i := start; i < len(currNode.weights); i++ {
+				newMin := currNode.weights[i]
+				if newMin < min {
+					min = newMin
+					minPos = i
+				}
+			}
+			//Swap the min and start in weight and adjacentNodes arrays
+			currNode.weights[minPos] = currNode.weights[start]
+			currNode.weights[start] = min
+
+			helper := currNode.adjacentNodes[minPos]
+			currNode.adjacentNodes[minPos] = currNode.adjacentNodes[start]
+			currNode.adjacentNodes[start] = helper
+
+			start++
+		}
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				bfsQueue = append(bfsQueue, currNode.adjacentNodes[i])
+				currNode.adjacentNodes[i].parrent = currNode
+			}
+		}
+		currNode = bfsQueue[1]
+		bfsQueue = bfsQueue[1:]
+
+		if currNode.nodeType == "end" {
+			endNode = currNode
+			break
+		}
+	}
+	return endNode
+}
+
 var processors = runtime.GOMAXPROCS(runtime.NumCPU())
 var wg sync.WaitGroup
 
@@ -499,6 +547,7 @@ func main() {
 	saveImage(nodeMap, "NonRecDfs.png")
 	rstVisited()
 
+	//BFS algorithms overflow in large non-perfrct mazes so i disabled them until further optimisation
 	/*//RecBFS
 	sTime = time.Now()
 
@@ -529,6 +578,19 @@ func main() {
 	saveImage(nodeMap, "NonRecBfs.png")
 	rstVisited()*/
 
+	/*//weightedBFS
+	sTime = time.Now()
+	wBfs(getStart())
+	endNode := getEnd()
+	bfsLinker(endNode)
+	for i, j := 0, len(path)-1; i < j; i, j = i+1, j-1 {
+		path[i], path[j] = path[j], path[i]
+	}
+	elapsed = time.Since(sTime)
+	fmt.Println("Finished Weighted B.F.S in: "+elapsed.String()+", Path Length:", len(path), "Nodes")
+	saveImage(nodeMap, "wBfs.png")
+	rstVisited()*/
+
 	//mrBFS
 	sTime = time.Now()
 	wg.Add(1)
@@ -544,5 +606,4 @@ func main() {
 	saveImage(nodeMap, "mrBfs.png")
 	rstVisited()
 
-	fmt.Println(getStart().adjacentNodes[0].weights)
 }
