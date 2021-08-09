@@ -120,5 +120,59 @@ func recDfs(currNode *node) {
 }
 ```
 ### Breadth First Search(BFS)
-BFS is also a very simple algorithm. It traverses the tree scanning each time all the next available nodes from the current one. To do this it utilises a Queue(FIFO). The benefit of bfs is that it will always find the shortest path to the end node BUT it is a lot slower compared to dfs if there are more than one available paths. The problem with bfs is that when the algorithm finishes there is no path created, the only output is the end node. To solve this issue i use the `parrent` pointer in the `node` object. For each node visited the algorithms stores the pointer of the previous node as the parrent of the current one, this way a reverse path is created!
-Because it is very easy to locate the end node we can create a path starting from the end and ending at the start (confusing...). Finaly we reverse it and the end result is the shortest route to the exit.
+BFS is also a very simple algorithm. It traverses the tree scanning each time all the next available nodes from the current one. To do this it utilises a Queue(FIFO). The benefit of bfs is that it will always find the shortest path to the end node BUT it is a lot slower compared to dfs if there are more than one available paths. The problem with bfs is that when the algorithm finishes there is no path created, the only output is the end node. To solve this issue i use the `parrent` pointer in the `node` object. For each node visited the algorithm stores the pointer of the previous node as the parrent of the current one, this way a reverse path is created!
+Because it is very easy to locate the end node we can create a path starting from the end and ending at the start (confusing...). Finaly we reverse it and the end result is the shortest route to the exit. Sadly the problems dont end here. For large Non-Perfect (more then 1 paths) mazes, the Non-Recursive implementation reached up to 7.5GB memmory usage before i stoped it! And the recursive type simply overflows. This indicates that the queue size is geting extremely large, and even if we had a lot of memmory the execution time is unpractical.
+#### Non-Recursive
+```go
+func bfs(startNode *node) *node {
+	var bfsQueue []*node
+	bfsQueue = append(bfsQueue, startNode)
+	currNode := startNode
+	var endNode *node
+	for currNode.nodeType != "end" {
+		currNode.visited = true
+		for i := 0; i < len(currNode.adjacentNodes); i++ {
+			if !currNode.adjacentNodes[i].visited {
+				bfsQueue = append(bfsQueue, currNode.adjacentNodes[i])
+				currNode.adjacentNodes[i].parrent = currNode
+			}
+		}
+		currNode = bfsQueue[1]
+		bfsQueue = bfsQueue[1:]
+
+		if currNode.nodeType == "end" {
+			endNode = currNode
+			break
+		}
+	}
+	return endNode
+}
+```
+
+#### Recursive
+```go
+func recbfs(currNode *node) *node {
+	currNode.visited = true
+	if len(bfsQueue) == 0 {
+		bfsQueue = append(bfsQueue, currNode)
+	}
+	for i := 0; i < len(currNode.adjacentNodes); i++ {
+		if !currNode.adjacentNodes[i].visited {
+			bfsQueue = append(bfsQueue, currNode.adjacentNodes[i])
+			currNode.adjacentNodes[i].parrent = currNode
+		}
+	}
+	var nextNode *node
+	if len(bfsQueue) > 1 {
+		nextNode = bfsQueue[1]
+		bfsQueue = bfsQueue[1:]
+	} else {
+		nextNode = nil
+	}
+	if currNode.nodeType != "end" {
+		return recbfs(nextNode)
+	} else {
+		return currNode
+	}
+}
+```
