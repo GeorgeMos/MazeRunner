@@ -21,6 +21,7 @@ type node struct {
 	pos           [2]int
 	//Used in bfs
 	parrent *node
+	weights []int //The length to go from the current node to each of the adjacent nodes
 }
 ```
 The two main variables that we use are `nodeType` and `adjacentNodes`. The rest will be explained later. <br>
@@ -118,3 +119,5 @@ func recDfs(currNode *node) {
 	}
 }
 ```
+### Breadth First Search(BFS)
+BFS is also a very simple algorithm.
