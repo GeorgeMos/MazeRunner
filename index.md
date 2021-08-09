@@ -120,4 +120,4 @@ func recDfs(currNode *node) {
 }
 ```
 ### Breadth First Search(BFS)
-BFS is also a very simple algorithm. It traverses the tree scanning each time all the next available nodes from the current one. To do this it utilises a Queue(FIFO). The benefit of bfs is that it will always find the shortest path to the end node BUT it is a lot slower compared to dfs if there are more than one available paths.
+BFS is also a very simple algorithm. It traverses the tree scanning each time all the next available nodes from the current one. To do this it utilises a Queue(FIFO). The benefit of bfs is that it will always find the shortest path to the end node BUT it is a lot slower compared to dfs if there are more than one available paths. The problem with bfs is that when the algorithm finishes there is no path created, the only output is the end node. To solve this issue i use the `parrent` variable in the `node` object.
