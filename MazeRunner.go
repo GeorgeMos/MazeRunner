@@ -133,7 +133,7 @@ type node struct {
 	pos           [2]int
 	//Used in bfs
 	parrent *node
-	weights []int //The length to go from the parrent to this node
+	weights []int //The length to go from the current node to each of the adjacent nodes
 }
 
 //Initialises the node map
